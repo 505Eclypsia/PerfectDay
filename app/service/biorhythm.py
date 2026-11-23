@@ -89,14 +89,14 @@ class BiorhythmCalculator:
 # Тестовый запуск модуля в терминале
 # ==========================================
 if __name__ == "__main__":
-    # Пример пользователя (дата рождения: 15 марта 2002)
+    # Пример пользователя (дата рождения: 1 мая 2006)
     user_birth = date(2006, 5, 1)
     today = date.today()
 
     print(f"=== РАСЧЁТ БИОРИТМОВ НА {today} ===")
     print(f"Дата рождения: {user_birth}\n")
 
-    values = BiorhythmCalculator.get_day_values(user_birth, today.replace(day=today.day-1))
+    values = BiorhythmCalculator.get_day_values(user_birth, today - timedelta(days=1))
     print("\nПоказатели энергии вчера:")
     print(f"  • Физический цикл:       {values['physical']:>6}%")
     print(f"  • Эмоциональный цикл:    {values['emotional']:>6}%")
