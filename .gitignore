@@ -2,3 +2,7 @@
 .venv
 .git
 .idea
+
+*.db
+*.7z
+*.rar

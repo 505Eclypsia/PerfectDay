@@ -1,6 +1,6 @@
 import math
 from datetime import date, timedelta
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 
 class BiorhythmCalculator:
@@ -16,9 +16,7 @@ class BiorhythmCalculator:
 
     @classmethod
     def get_day_values(cls, birth_date: date, target_date: date) -> Dict[str, float]:
-        """
-        Возвращает значения биоритмов на указанную дату (в процентах от -100 до +100).
-        """
+        """Возвращает значения биоритмов на указанную дату (в процентах от -100 до +100)."""
         days_alive = (target_date - birth_date).days
         if days_alive < 0:
             raise ValueError("Дата расчёта не может быть раньше даты рождения.")
@@ -33,25 +31,26 @@ class BiorhythmCalculator:
     def check_critical_day(cls, birth_date: date, target_date: date) -> Dict[str, Any]:
         """
         Определяет критические дни (переход синусоиды через 0).
-        В такие дни биоритм меняет знак.
+        Возвращает латинские коды циклов (physical, emotional, intellectual).
         """
         days_today = (target_date - birth_date).days
+        if days_today < 0:
+            raise ValueError("Дата расчёта не может быть раньше даты рождения.")
         days_yesterday = days_today - 1
 
-        critical_cycles = []
+        critical_cycles: List[str] = []
         cycles = [
-            ("Физический", cls.PHYSICAL_PERIOD),
-            ("Эмоциональный", cls.EMOTIONAL_PERIOD),
-            ("Интеллектуальный", cls.INTELLECTUAL_PERIOD),
+            ("physical", cls.PHYSICAL_PERIOD),
+            ("emotional", cls.EMOTIONAL_PERIOD),
+            ("intellectual", cls.INTELLECTUAL_PERIOD),
         ]
 
-        for name, period in cycles:
+        for code, period in cycles:
             val_prev = cls._calculate_sine(days_yesterday, period)
             val_curr = cls._calculate_sine(days_today, period)
 
-            # Если знак изменился или значение ровно 0 — график пересёк нулевую отметку
             if (val_prev < 0 and val_curr >= 0) or (val_prev > 0 and val_curr <= 0) or val_curr == 0:
-                critical_cycles.append(name)
+                critical_cycles.append(code)
 
         count = len(critical_cycles)
         risk_level = "Обычный день"
@@ -70,56 +69,21 @@ class BiorhythmCalculator:
         }
 
     @classmethod
-    def get_forecast(cls, birth_date: date, start_date: date, days_count: int = 7) -> List[Dict[str, Any]]:
+    def get_forecast(
+        cls, birth_date: date, start_date: date, days_count: int = 7
+    ) -> List[Dict[str, Any]]:
         """Генерация массива данных для отрисовки графиков на фронтенде."""
-        forecast = []
+        forecast: List[Dict[str, Any]] = []
         for i in range(days_count):
             current_day = start_date + timedelta(days=i)
             values = cls.get_day_values(birth_date, current_day)
             crit = cls.check_critical_day(birth_date, current_day)
-            forecast.append({
-                "date": current_day.isoformat(),
-                "values": values,
-                "is_critical": crit["is_critical"],
-            })
+            forecast.append(
+                {
+                    "date": current_day.isoformat(),
+                    "values": values,
+                    "is_critical": crit["is_critical"],
+                    "critical_cycles": crit["critical_cycles"],
+                }
+            )
         return forecast
-
-
-# ==========================================
-# Тестовый запуск модуля в терминале
-# ==========================================
-if __name__ == "__main__":
-    # Пример пользователя (дата рождения: 1 мая 2006)
-    user_birth = date(2006, 5, 1)
-    today = date.today()
-
-    print(f"=== РАСЧЁТ БИОРИТМОВ НА {today} ===")
-    print(f"Дата рождения: {user_birth}\n")
-
-    values = BiorhythmCalculator.get_day_values(user_birth, today - timedelta(days=1))
-    print("\nПоказатели энергии вчера:")
-    print(f"  • Физический цикл:       {values['physical']:>6}%")
-    print(f"  • Эмоциональный цикл:    {values['emotional']:>6}%")
-    print(f"  • Интеллектуальный цикл: {values['intellectual']:>6}%")
-
-
-    # 1. Текущие значения
-    values = BiorhythmCalculator.get_day_values(user_birth, today)
-    print("Текущие показатели энергии:")
-    print(f"  • Физический цикл:       {values['physical']:>6}%")
-    print(f"  • Эмоциональный цикл:    {values['emotional']:>6}%")
-    print(f"  • Интеллектуальный цикл: {values['intellectual']:>6}%")
-
-    # 2. Проверка на критический день
-    critical_info = BiorhythmCalculator.check_critical_day(user_birth, today)
-    print(f"\nСтатус дня: {critical_info['status']}")
-    if critical_info["is_critical"]:
-        print(f"Затронутые циклы: {', '.join(critical_info['critical_cycles'])}")
-
-    # 3. Прогноз на ближайшие 3 дня
-    print("\nПрогноз на 3 дня вперёд:")
-    forecast = BiorhythmCalculator.get_forecast(user_birth, today, days_count=3)
-    for day_data in forecast:
-        val = day_data['values']
-        crit_mark = "⚠️ КРИТИЧЕСКИЙ" if day_data['is_critical'] else "OK"
-        print(f"  [{day_data['date']}] Физ: {val['physical']}%, Эмо: {val['emotional']}%, Инт: {val['intellectual']}% ({crit_mark})")

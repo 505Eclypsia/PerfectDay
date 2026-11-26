@@ -15,7 +15,19 @@ class TaskType(str, Enum):
     REST = "rest"
 
 
+class TaskStatus(str, Enum):
+    NOT_DONE = "not_done"
+    ON_REPEAT = "on_repeat"
+    DONE = "done"
+
+
 class SlotStatus(str, Enum):
     PLANNED = "planned"
     DONE = "done"
     MISSED = "missed"
+
+
+class BiorhythmCycle(str, Enum):
+    PHYSICAL = "physical"
+    EMOTIONAL = "emotional"
+    INTELLECTUAL = "intellectual"

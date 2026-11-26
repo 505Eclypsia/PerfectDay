@@ -4,12 +4,13 @@ from typing import Dict, List, Optional
 from app.config import planner_config as cfg
 from app.model.enums import Chronotype, TaskType
 
-Windows = Dict[str, TaskType]   # {"09:00-12:00": TaskType.INTELLECTUAL, ...}
+Windows = Dict[str, TaskType]
 
 
 @dataclass
 class DayNote:
     """Пояснение или предупреждение к дню (window=None) либо к конкретному окну."""
+
     text: str
     window: Optional[str] = None
 
@@ -58,40 +59,50 @@ class ChronotypeManager:
 
     @classmethod
     def get_base_day_windows(cls, chronotype: Chronotype) -> Windows:
-        """Возвращает стандартную суточную сетку для хронотипа (копию, её можно менять)."""
         return dict(cls._PROFILES[Chronotype(chronotype)])
 
     @classmethod
-    def adapt_day_with_biorhythms(cls, chronotype: Chronotype, biorhythms: Dict[str, float],
-                                  is_critical: bool = False) -> AdaptedDay:
-        """
-        Перестраивает суточную сетку под текущие проценты биоритмов:
-        - интеллект < INTEL_DROP_THRESHOLD: интеллектуальные блоки понижаются до рутины;
-        - физический пик > PHYS_PEAK_THRESHOLD: рекомендация интенсивной нагрузки в физическом блоке;
-        - физический спад < PHYS_DROP_THRESHOLD: рекомендация лёгкой нагрузки;
-        - критический день: общее предупреждение.
-        """
+    def adapt_day_with_biorhythms(
+        cls,
+        chronotype: Chronotype,
+        biorhythms: Dict[str, float],
+        is_critical: bool = False,
+    ) -> AdaptedDay:
         windows = cls.get_base_day_windows(chronotype)
         notes: List[DayNote] = []
         intel, phys = biorhythms["intellectual"], biorhythms["physical"]
 
         if is_critical:
-            notes.append(DayNote("Внимание: критический день! Нагрузка снижена, избегайте важных решений."))
+            notes.append(
+                DayNote("Внимание: критический день! Нагрузка снижена, избегайте важных решений.")
+            )
 
         for window, block in list(windows.items()):
             if block == TaskType.INTELLECTUAL:
                 if intel < cfg.INTEL_DROP_THRESHOLD:
                     windows[window] = TaskType.ROUTINE
-                    notes.append(DayNote(
-                        f"Интеллект на спаде ({intel:+.1f}%). Сложные задачи заменены рутиной.", window))
+                    notes.append(
+                        DayNote(
+                            f"Интеллект на спаде ({intel:+.1f}%). Интеллектуальный блок переключён в режим лёгкой рутины.",
+                            window,
+                        )
+                    )
                 else:
                     notes.append(DayNote("Оптимальное окно по вашему хронотипу.", window))
             elif block == TaskType.PHYSICAL:
                 if phys > cfg.PHYS_PEAK_THRESHOLD:
-                    notes.append(DayNote(
-                        f"Физический пик ({phys:+.1f}%)! Идеальное время для интенсивных нагрузок.", window))
+                    notes.append(
+                        DayNote(
+                            f"Физический пик ({phys:+.1f}%)! Идеальное время для интенсивных нагрузок.",
+                            window,
+                        )
+                    )
                 elif phys < cfg.PHYS_DROP_THRESHOLD:
-                    notes.append(DayNote(
-                        f"Физический спад ({phys:+.1f}%). Замените тяжёлый спорт лёгкой прогулкой.", window))
+                    notes.append(
+                        DayNote(
+                            f"Физический спад ({phys:+.1f}%). Замените тяжёлый спорт лёгкой прогулкой.",
+                            window,
+                        )
+                    )
 
         return AdaptedDay(windows=windows, notes=notes)

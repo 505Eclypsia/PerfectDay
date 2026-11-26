@@ -30,10 +30,12 @@ PHYS_DROP_THRESHOLD = -50                  # ниже: рекомендация 
 FIT = {
     (TaskType.INTELLECTUAL, TaskType.INTELLECTUAL): 1.0,
     (TaskType.INTELLECTUAL, TaskType.CREATIVE): 0.5,
-    (TaskType.INTELLECTUAL, TaskType.ROUTINE): 0.2,   # запасной вариант, когда блок понижен адаптацией
+    (TaskType.INTELLECTUAL, TaskType.ROUTINE): 0.2,
     (TaskType.PHYSICAL, TaskType.PHYSICAL): 1.0,
+    (TaskType.PHYSICAL, TaskType.ROUTINE): 0.25,
     (TaskType.CREATIVE, TaskType.CREATIVE): 1.0,
     (TaskType.CREATIVE, TaskType.INTELLECTUAL): 0.4,
+    (TaskType.CREATIVE, TaskType.ROUTINE): 0.25,
     (TaskType.ROUTINE, TaskType.ROUTINE): 1.0,
     (TaskType.ROUTINE, TaskType.REST): 0.2,
     (TaskType.REST, TaskType.REST): 1.0,
